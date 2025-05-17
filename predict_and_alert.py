@@ -45,7 +45,7 @@ predicted_risk = cluster_to_risk.get(predicted_cluster, "Unknown")
 
 print("Predicted Risk Level:", predicted_risk)
 
-# If Medium or High risk, send alert by updating ThingSpeak field or trigger ThingSpeak notification
+# Update ThingSpeak if risk is valid
 if predicted_risk in ['Low Risk', 'Medium Risk', 'High Risk']:
     WRITE_API_KEY = "BUT1G7Z2C06PGVS9"
     update_url = "https://api.thingspeak.com/update.json"
