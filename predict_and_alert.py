@@ -39,7 +39,7 @@ print("Predicted Risk Level:", predicted_risk)
 
 # If Medium or High risk, send alert by updating ThingSpeak field or trigger ThingSpeak notification
 if predicted_risk in ['Medium Risk', 'High Risk']:
-    WRITE_API_KEY = "YOUR_WRITE_API_KEY"
+    WRITE_API_KEY = "KL184FDN8MQGS4TD"
     update_url = f"https://api.thingspeak.com/update.json"
     payload = {
         'api_key': WRITE_API_KEY,
