@@ -8,7 +8,7 @@ pca = joblib.load("model files/pca.pkl")
 model = joblib.load("model files/model.pkl")
 
 # Fetch latest data from ThingSpeak channel
-THINGSPEAK_API_KEY = "BUT1G7Z2C06PGVS9"
+THINGSPEAK_API_KEY = "KL184FDN8MQGS4TD"
 THINGSPEAK_CHANNEL_ID = "2963447"
 
 url = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds.json?results=1&api_key={THINGSPEAK_API_KEY}"
@@ -39,7 +39,7 @@ print("Predicted Risk Level:", predicted_risk)
 
 # If Medium or High risk, send alert by updating ThingSpeak field or trigger ThingSpeak notification
 if predicted_risk in ['Low Risk','Medium Risk', 'High Risk']:
-    WRITE_API_KEY = "KL184FDN8MQGS4TD"
+    WRITE_API_KEY = "BUT1G7Z2C06PGVS9"
     update_url = f"https://api.thingspeak.com/update.json"
     payload = {
         'api_key': WRITE_API_KEY,
