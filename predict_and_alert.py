@@ -38,7 +38,7 @@ predicted_risk = cluster_to_risk[predicted_cluster]
 print("Predicted Risk Level:", predicted_risk)
 
 # If Medium or High risk, send alert by updating ThingSpeak field or trigger ThingSpeak notification
-if predicted_risk in ['Medium Risk', 'High Risk']:
+if predicted_risk in ['Low Risk','Medium Risk', 'High Risk']:
     WRITE_API_KEY = "KL184FDN8MQGS4TD"
     update_url = f"https://api.thingspeak.com/update.json"
     payload = {
