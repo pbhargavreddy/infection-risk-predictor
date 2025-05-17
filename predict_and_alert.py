@@ -1,47 +1,50 @@
 import requests
-import pickle
-import numpy as np
+import pandas as pd
+import joblib
 
-# Load models
-with open("model.pkl", "rb") as f:
-    model = pickle.load(f)
-with open("scaler.pkl", "rb") as f:
-    scaler = pickle.load(f)
-with open("pca.pkl", "rb") as f:
-    pca = pickle.load(f)
+# Load your models
+scaler = joblib.load("model files/scaler.pkl")
+pca = joblib.load("model files/pca.pkl")
+model = joblib.load("model files/model.pkl")
 
-# ThingSpeak parameters
-READ_API_URL = "https://api.thingspeak.com/channels/2963447/feeds.json?api_key=KL184FDN8MQGS4TD&results=1"
-WRITE_API_KEY = "BUT1G7Z2C06PGVS9"
+# Fetch latest data from ThingSpeak channel
+THINGSPEAK_API_KEY = "BUT1G7Z2C06PGVS9"
+THINGSPEAK_CHANNEL_ID = "2963447"
 
-# Get latest sensor data
-response = requests.get(READ_API_URL)
+url = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds.json?results=1&api_key={THINGSPEAK_API_KEY}"
+
+response = requests.get(url)
 data = response.json()
 
-try:
-    feed = data['feeds'][0]
-    features = [
-        float(feed['field1']),  # temperature
-        float(feed['field2']),  # humidity
-        float(feed['field3']),  # pressure
-        float(feed['field5']),  # CO2
-        float(feed['field6']),  # TVOC
-        float(feed['field4'])   # Dust
-    ]
+feeds = data['feeds'][0]
 
-    # Preprocessing
-    X_scaled = scaler.transform([features])
-    X_pca = pca.transform(X_scaled)
-    prediction = model.predict(X_pca)[0]
+new_data = pd.DataFrame([{
+    'Temp': float(feeds['field1']),
+    'Humidity': float(feeds['field2']),
+    'Pressure': float(feeds['field3']),
+    'PM2.5': float(feeds['field4']),
+    'CO2': float(feeds['field5']),
+    'TVOC': float(feeds['field6']),
+}])
 
-    # Write back to ThingSpeak
-    RISK_LABEL = ['Low', 'Medium', 'High'][prediction]
-    print(f"Predicted Risk: {RISK_LABEL}")
+# Scale, PCA, predict
+new_data_scaled = scaler.transform(new_data)
+new_data_pca = pca.transform(new_data_scaled)
+predicted_cluster = model.predict(new_data_pca)[0]
 
-    response = requests.get(
-        f"https://api.thingspeak.com/update?api_key={WRITE_API_KEY}&field7={prediction}&field8={RISK_LABEL}"
-    )
-    print("Update Response:", response.status_code)
+cluster_to_risk = {0: 'Low Risk', 1: 'High Risk', 2: 'Medium Risk'}
+predicted_risk = cluster_to_risk[predicted_cluster]
 
-except Exception as e:
-    print("Error:", e)
+print("Predicted Risk Level:", predicted_risk)
+
+# If Medium or High risk, send alert by updating ThingSpeak field or trigger ThingSpeak notification
+if predicted_risk in ['Medium Risk', 'High Risk']:
+    WRITE_API_KEY = "YOUR_WRITE_API_KEY"
+    update_url = f"https://api.thingspeak.com/update.json"
+    payload = {
+        'api_key': WRITE_API_KEY,
+        'field7': predicted_risk,
+        'field8': str(new_data.to_dict(orient='records')[0])
+    }
+    r = requests.post(update_url, data=payload)
+    print("Alert sent, ThingSpeak response:", r.text)

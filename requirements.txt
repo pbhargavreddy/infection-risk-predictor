@@ -1,5 +1,4 @@
-numpy
 pandas
-requests
 scikit-learn
 joblib
+requests
