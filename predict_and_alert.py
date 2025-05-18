@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 import joblib
-import time
+from scipy.stats import mode
 
 # Load trained components
 scaler = joblib.load("model files/scaler.pkl")
@@ -49,18 +49,20 @@ predicted_clusters = model.predict(df_pca)
 cluster_to_risk = {0: 'Low Risk', 1: 'High Risk', 2: 'Medium Risk'}
 predicted_risks = [cluster_to_risk[c] for c in predicted_clusters]
 
-# Prepare message for field8 (risk labels)
-risk_summary = ", ".join(predicted_risks)
+# Get mode of the predictions
+mode_cluster = int(mode(predicted_clusters, keepdims=False).mode)
+mode_risk = cluster_to_risk[mode_cluster]
 
 # Send to ThingSpeak
 update_url = "https://api.thingspeak.com/update.json"
 payload = {
     'api_key': WRITE_API_KEY,
-    'field7': predicted_clusters[-1],  # Most recent cluster ID
-    'field8': risk_summary             # Risk labels from last 5
+    'field7': mode_cluster,  # Most frequent cluster ID
+    'field8': mode_risk      # Corresponding risk label
 }
 
 response = requests.post(update_url, data=payload)
-print("Sent to ThingSpeak.")
-print("Predicted Risks:", risk_summary)
+print(" Sent to ThingSpeak.")
+print("Predicted Risks:", predicted_risks)
+print("Mode Cluster:", mode_cluster)
 print("ThingSpeak response:", response.text)
