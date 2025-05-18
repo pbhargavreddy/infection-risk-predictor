@@ -51,7 +51,7 @@ predicted_risk = cluster_to_risk[predicted_cluster]
 
 print("Predicted Risk Level:", predicted_risk)
 
-if predicted_risk in ['Medium Risk', 'High Risk']:
+if predicted_risk in ['Low Risk','Medium Risk', 'High Risk']:
     WRITE_API_KEY = "BUT1G7Z2C06PGVS9"
     update_url = "https://api.thingspeak.com/update.json"
     payload = {
