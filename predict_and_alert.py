@@ -2,28 +2,43 @@ import requests
 import pandas as pd
 import joblib
 from scipy.stats import mode
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-# Load trained components
-scaler = joblib.load("model files/scaler.pkl")
-pca = joblib.load("model files/pca.pkl")
-model = joblib.load("model files/model.pkl")
+# ========== Configuration ==========
 
-# ThingSpeak configuration
+# ML model paths
+SCALER_PATH = "model files/scaler.pkl"
+PCA_PATH = "model files/pca.pkl"
+MODEL_PATH = "model files/model.pkl"
+
+# ThingSpeak
 READ_API_KEY = "KL184FDN8MQGS4TD"
-WRITE_API_KEY = "BUT1G7Z2C06PGVS9"
-CHANNEL_ID = "2963447"
+READ_CHANNEL_ID = "2963447"
+PREDICTION_WRITE_API_KEY = "JPJL9MPVSH2VNR1B"  
 
-# Get last 5 feeds from ThingSpeak
-url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?results=20&api_key={READ_API_KEY}"
+# Email alert settings
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+EMAIL_SENDER = "pbhargavreddy3@gmail.com" 
+EMAIL_PASSWORD = "dmkt ziop sjnv wdss"  
+EMAIL_RECEIVER = "bhargavreddy9182@gmail.com"  
+# ========== Load ML Components ==========
+scaler = joblib.load(SCALER_PATH)
+pca = joblib.load(PCA_PATH)
+model = joblib.load(MODEL_PATH)
+
+# ========== Fetch Sensor Data ==========
+url = f"https://api.thingspeak.com/channels/{READ_CHANNEL_ID}/feeds.json?results=20&api_key={READ_API_KEY}"
 response = requests.get(url)
-data = response.json()
+feeds = response.json().get('feeds', [])
 
-feeds = data.get('feeds', [])
 if not feeds:
-    print("No feed data available, skipping prediction.")
-    exit(0)
+    print("No feed data available. Exiting.")
+    exit()
 
-# Helper function
+# Convert to float safely
 def safe_float(val):
     try:
         return float(val)
@@ -40,29 +55,70 @@ df = pd.DataFrame([{
     'TVOC': safe_float(feed.get('field6')),
 } for feed in feeds])
 
-# Scale and predict
+# ========== Prediction ==========
 df_scaled = scaler.transform(df)
 df_pca = pca.transform(df_scaled)
 predicted_clusters = model.predict(df_pca)
 
-# Map clusters to risks
+# Map cluster to risk
 cluster_to_risk = {0: 'Low Risk', 1: 'High Risk', 2: 'Medium Risk'}
 predicted_risks = [cluster_to_risk[c] for c in predicted_clusters]
 
-# Get mode of the predictions
+# Get mode of prediction
 mode_cluster = int(mode(predicted_clusters, keepdims=False).mode)
 mode_risk = cluster_to_risk[mode_cluster]
+latest_feed = df.iloc[-1]
 
-# Send to ThingSpeak
+# ========== Update ThingSpeak (Prediction Channel) ==========
 update_url = "https://api.thingspeak.com/update.json"
 payload = {
-    'api_key': WRITE_API_KEY,
-    'field7': mode_cluster,  # Most frequent cluster ID
-    'field8': mode_risk      # Corresponding risk label
+    'api_key': PREDICTION_WRITE_API_KEY,
+    'field1': latest_feed['Temp'],
+    'field2': latest_feed['Humidity'],
+    'field3': latest_feed['Pressure'],
+    'field4': latest_feed['PM2.5'],
+    'field5': latest_feed['CO2'],
+    'field6': latest_feed['TVOC'],
+    'field7': mode_cluster,
+    'field8': mode_risk
 }
-
 response = requests.post(update_url, data=payload)
-print(" Sent to ThingSpeak.")
+
+print("Sent to ThingSpeak (Predictions Channel).")
 print("Predicted Risks:", predicted_risks)
 print("Mode Cluster:", mode_cluster)
 print("ThingSpeak response:", response.text)
+
+# ========== Send Email If Needed ==========
+if mode_risk in ["Medium Risk", "High Risk"]:
+    subject = f"[ALERT] Infection Risk: {mode_risk}"
+    body = f"""
+    Predicted Infection Risk: {mode_risk}
+    Cluster ID: {mode_cluster}
+
+      Latest Sensor Readings:
+    - Temperature: {latest_feed['Temp']} °C
+    - Humidity: {latest_feed['Humidity']} %
+    - Pressure: {latest_feed['Pressure']} hPa
+    - PM2.5: {latest_feed['PM2.5']} µg/m³
+    - CO₂: {latest_feed['CO2']} ppm
+    - TVOC: {latest_feed['TVOC']} ppb
+
+     Data updated on ThingSpeak channel: https://thingspeak.com/channels/{READ_CHANNEL_ID}
+    """
+
+    msg = MIMEMultipart()
+    msg['From'] = EMAIL_SENDER
+    msg['To'] = EMAIL_RECEIVER
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+
+    try:
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
+        server.quit()
+        print(" Email alert sent successfully.")
+    except Exception as e:
+        print(" Failed to send email:", e)
