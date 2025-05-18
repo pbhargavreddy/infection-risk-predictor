@@ -14,7 +14,7 @@ WRITE_API_KEY = "BUT1G7Z2C06PGVS9"
 CHANNEL_ID = "2963447"
 
 # Get last 5 feeds from ThingSpeak
-url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?results=5&api_key={READ_API_KEY}"
+url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?results=20&api_key={READ_API_KEY}"
 response = requests.get(url)
 data = response.json()
 
