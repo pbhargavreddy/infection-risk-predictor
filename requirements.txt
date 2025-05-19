@@ -1,5 +1,4 @@
 pandas
-email
 joblib
 requests
 scipy
