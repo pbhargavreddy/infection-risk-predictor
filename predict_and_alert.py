@@ -1,3 +1,4 @@
+import os
 import requests
 import pandas as pd
 import joblib
@@ -18,12 +19,13 @@ READ_API_KEY = "KL184FDN8MQGS4TD"
 READ_CHANNEL_ID = "2963447"
 PREDICTION_WRITE_API_KEY = "JPJL9MPVSH2VNR1B"  
 
-# Email alert settings
+# Email alert settings (use environment variables for security!)
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-EMAIL_SENDER = "pbhargavreddy3@gmail.com" 
-EMAIL_PASSWORD = "dmkt ziop sjnv wdss"  
-EMAIL_RECEIVER = "bhargavreddy9182@gmail.com"  
+EMAIL_SENDER = "pbhargavreddy3@gmail.com"
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")  # <-- don't hardcode!
+EMAIL_RECEIVER = "bhargavreddy9182@gmail.com"
+
 # ========== Load ML Components ==========
 scaler = joblib.load(SCALER_PATH)
 pca = joblib.load(PCA_PATH)
@@ -69,7 +71,7 @@ mode_cluster = int(mode(predicted_clusters, keepdims=False).mode)
 mode_risk = cluster_to_risk[mode_cluster]
 latest_feed = df.iloc[-1]
 
-# ========== Update ThingSpeak (Prediction Channel) ==========
+# ========== Update ThingSpeak ==========
 update_url = "https://api.thingspeak.com/update.json"
 payload = {
     'api_key': PREDICTION_WRITE_API_KEY,
@@ -96,7 +98,7 @@ if mode_risk in ["Medium Risk", "High Risk"]:
     Predicted Infection Risk: {mode_risk}
     Cluster ID: {mode_cluster}
 
-      Latest Sensor Readings:
+    Latest Sensor Readings:
     - Temperature: {latest_feed['Temp']} °C
     - Humidity: {latest_feed['Humidity']} %
     - Pressure: {latest_feed['Pressure']} hPa
@@ -104,7 +106,7 @@ if mode_risk in ["Medium Risk", "High Risk"]:
     - CO₂: {latest_feed['CO2']} ppm
     - TVOC: {latest_feed['TVOC']} ppb
 
-     Data updated on ThingSpeak channel: https://thingspeak.com/channels/{READ_CHANNEL_ID}
+    Data updated on ThingSpeak: https://thingspeak.com/channels/{READ_CHANNEL_ID}
     """
 
     msg = MIMEMultipart()
@@ -119,6 +121,6 @@ if mode_risk in ["Medium Risk", "High Risk"]:
         server.login(EMAIL_SENDER, EMAIL_PASSWORD)
         server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
         server.quit()
-        print(" Email alert sent successfully.")
+        print("Email alert sent successfully.")
     except Exception as e:
-        print(" Failed to send email:", e)
+        print("Failed to send email:", e)
