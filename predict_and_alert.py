@@ -1,3 +1,19 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load environment variables from .env file
+# ThingSpeak
+READ_API_KEY = os.getenv("READ_API_KEY")
+READ_CHANNEL_ID = os.getenv("READ_CHANNEL_ID")
+PREDICTION_WRITE_API_KEY = os.getenv("PREDICTION_WRITE_API_KEY")
+
+# Email settings
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = int(os.getenv("SMTP_PORT"))
+EMAIL_SENDER = os.getenv("EMAIL_SENDER")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
+
 import os
 import requests
 import pandas as pd
