@@ -22,9 +22,9 @@ PREDICTION_WRITE_API_KEY = "JPJL9MPVSH2VNR1B"
 # Email alert settings (use environment variables for security!)
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-EMAIL_SENDER = "pbhargavreddy3@gmail.com"
-EMAIL_PASSWORD = "dmkt ziop sjnv wdss"
-EMAIL_RECEIVER = "bhargavreddy9182@gmail.com"
+EMAIL_SENDER = "infectionriskprediction@gmail.com"
+EMAIL_PASSWORD = "tleh zksr pafx ucbg"
+EMAIL_RECEIVER = "pbhargavreddy3@gmail.com"
 
 # ========== Load ML Components ==========
 scaler = joblib.load(SCALER_PATH)
