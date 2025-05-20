@@ -23,7 +23,7 @@ PREDICTION_WRITE_API_KEY = "JPJL9MPVSH2VNR1B"
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 EMAIL_SENDER = "pbhargavreddy3@gmail.com"
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")  # <-- don't hardcode!
+EMAIL_PASSWORD = "dmkt ziop sjnv wdss"
 EMAIL_RECEIVER = "bhargavreddy9182@gmail.com"
 
 # ========== Load ML Components ==========
