@@ -1,6 +1,6 @@
-requests
+numpy==1.23.5
 pandas
 scipy
-joblib==1.2.0
+joblib
 scikit-learn==1.2.2
-numpy==1.23.5
+requests
