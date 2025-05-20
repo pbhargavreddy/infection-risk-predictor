@@ -1,4 +1,9 @@
 __pycache__/
 *.pyc
 .env
-*.pkl
+# Remove the following line
+# *.pkl
+
+# Optional: still ignore other .pkl files except model files
+# Uncomment this if you want to ignore general .pkl files but allow model ones
+# !model files/*.pkl
